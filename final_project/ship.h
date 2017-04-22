@@ -1,38 +1,85 @@
-//author: Justin Gutter
+#ifndef __ship__
+#define __ship__
 
-#ifndef __SHIP_H__
-#define __SHIP_H__
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "lcd.h"
 
-#include "vector.h"
+#define       LCD_X_MAX     239
+#define       LCD_X_MIN      0
+#define				LCD_Y_MAX			319
+#define				LCD_Y_MIN			0
 
-#define MAX_SPEED 100 //max speed will need to be adjusted
+#define				ANGLE_MAX			35
+#define				ANGLE_MIN			0
 
-#define SHIP_INVINCIBILITY 2 //ship will be invincibile for 2 seconds on a new life
+/* Font data for Sitka Small 12pt */
+extern const uint8_t shipBitmaps[];
 
-#define ACCELERATION_CONST 5 //acceleration constant for thrusting and deceleration
+typedef struct
+{
+	uint8_t angle; 			//holds the current angel that ship is pointing 
+  uint8_t Xpos;				//current X coordinate on LCD
+  uint8_t Ypos;				//current Y coordiante on LCD
+  uint8_t Xvelocity;	//rotational velocity
+	uint8_t Yvelocity;	//translational velocity 
+	uint8_t isDead;			//indicates if ship is hit 
+} ship;
 
-#define ROTATE_INCR 5 //ship will rotate in 5 degree increments
 
-typedef struct {
+/**********************************************************
+* Function Name: 
+**********************************************************
+* Summary: 
+*
+*
+* Returns:
+*  Nothing
+**********************************************************/
+bool initialize_ship(ship* myShip, uint8_t angle, uint8_t Xpos, uint8_t Ypos, uint8_t Xvelocity, uint8_t Yvelocity);
 	
-	Vector position; //position of ship
+/**********************************************************
+* Function Name: lcd_print_stringXY
+**********************************************************
+* Summary: prints a string to the LCD screen at a specified
+* XY location in specified foreground and background colors
+* X will specify the number of characters across with X=0
+* being the left most character position, and X=13 being
+* the right most.  Y will specify the number of characters
+* down the screen with Y=0 being the top of the screen and
+* Y=19 being the bottom row of characters.  NOTE this is
+* opposite of how columns and rows are specified for the
+* IL9341.
+* Returns:
+*  Nothing
+**********************************************************/
+void lcd_print_ship(
+		ship * myShip,
+    uint16_t fg_color, 
+    uint16_t bg_color
+);
+
+/**********************************************************
+* Function Name: 
+**********************************************************
+* Summary: 
+*
+*
+* Returns:
+*  Nothing
+**********************************************************/
+void angle_increment(ship* myShip);
 	
-	Vector velocity; //velocity of ship
-	
-	int angle;				//angle of ship in degrees
-	
-	int invincibility;	//seconds of invincibility
-	
-} Ship;
-
-Ship new_ship(Vector pos, Vector vel); //create a new ship at a position with a velocity
-
-void accelerate_ship(Ship* ship); //accelerate ship
-
-void deccelerate_ship(Ship* ship); //deccelerate ship
-
-void rotate_ship_left(Ship* ship); //rotate ship left
-
-void rotate_ship_right(Ship* ship); //rotate ship right
-
+/**********************************************************
+* Function Name: 
+**********************************************************
+* Summary: 
+*
+*
+* Returns:
+*  Nothing
+**********************************************************/
+void angle_decrement(ship* myShip);
+    
 #endif
