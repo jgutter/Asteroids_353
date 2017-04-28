@@ -4,36 +4,54 @@
 
 #include "vector.h"
 #include "lcd.h"
+#include <stdlib.h>
 #define ASTEROIDS_LIST_SIZE 128
 
+//ADD CODE
+#define LARGE_ASTEROID_HEIGHT	0
+#define LARGE_ASTEROID_WIDTH	0
+#define MEDIUM_ASTEROID_HEIGHT	0
+#define MEDIUM_ASTEROID_WIDTH	0
+#define SMALL_ASTEROID_HEIGHT	0
+#define SMALL_ASTEROID_WIDTH	0
+#define ASTEROID_COLOR LCD_COLOR_WHITE
+#define BACKGROUND_COLOR LCD_COLOR_BLACK
+
+#define SIZE_VELOCITY_FACTOR 1.15
 
 typedef struct {
 	Vector position;
-	Vector vector;
-	int angle;
-	uint8_t size;
-} Asteroid
+	Vector velocity;
+	uint16_t angle;
+	uint8_t size;		//size definition: 0 LARGE; 1 MEDIUM; 2 SMALL
+	int index; //index of this asteroid in list
+} Asteroid;
 
-Asteroid new_asteroid(Vector pos, Vector vel);
+Asteroid new_asteroid(Vector pos, Vector vel, uint16_t angle, uint8_t size);
 
 typedef struct {
-	Asteroid asteroids[MAX_ASTEROIDS];
+	Asteroid * asteroids;
 	int start_index;
 	int end_index;
-} Asteroid_list //List of Asteroids (circular array)
-
-//add asteroid to list
-void add_asteroid(Asteroid_list* list, Asteroid * asteroid);
-
-void remove_asteroid(Asteroid_list* list, Asteroid
+	uint16_t list_size;
+	int num_asteroids;
+} Asteroid_list; //List of Asteroids (circular array)
 
 Asteroid_list* new_asteroid_list(void); //dynamically allocate an asteroid list
 
-void free_asteroid_list(Asteroid_list*); //free memory for asteroid list
+void free_asteroid_list(Asteroid_list* list); //free memory for asteroid list
 
-void update_asteroid(Asteroid_list* asteroid);
+//add asteroid to list
+void add_asteroid(Asteroid_list* list, Asteroid * asteroid); //add asteroid to asteroid list
 
-void draw_asteroid(Asteroid_list* asteroid);
+void remove_asteroid(Asteroid_list* list, Asteroid * asteroid); //remove asteroid from asteroid list
 
+void update_asteroid(Asteroid_list* list);
+
+void draw_asteroids(Asteroid_list* list);
+
+void split_asteroid(Asteroid_list * list, Asteroid*);
+
+int count_asteroid(Asteroid_list*);
 
 #endif

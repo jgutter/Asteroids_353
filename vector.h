@@ -13,7 +13,7 @@
 
 
 typedef struct { //define vector structure for other modules
-	int x, y;
+	float x, y;
 	} Vector;
 
 Vector new_vector(void); //create and initialize vector struct

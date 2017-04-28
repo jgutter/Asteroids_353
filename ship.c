@@ -251,7 +251,7 @@ void rotate_ship_right(Ship* ship) { //rotate ship right
 	ship->angle = (ship->angle - ROTATE_INCR) % 360;
 }; 
 
-void update_ship(Ship * ship) {
+void update_ship(Ship * ship) { //ship's movement does not include drag
 	ship->position = add(ship->position, ship->velocity);
 	if(ship->position.x > LCD_MAX_X)
 		ship->position.x = LCD_MIN;
@@ -266,7 +266,7 @@ void update_ship(Ship * ship) {
 
 void draw_ship(Ship * ship) {
 	uint8_t ship_indx = 0;
-	//need a uniform bitmap array to access correct ship image via simple calculation
+	//TODO: need a uniform bitmap array to access correct ship image via simple calculation of angle
 	lcd_draw_image(ship->position.x,SHIP_WIDTH,ship->position.y,SHIP_HEIGHT, &shipBitmaps[ship_indx], SHIP_COLOR, BACKGROUND_COLOR);
 };
 
