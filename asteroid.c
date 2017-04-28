@@ -25,7 +25,7 @@ Asteroid new_asteroid(Vector pos, Vector vel, uint16_t angle, uint8_t size) {
 Asteroid_list* new_asteroid_list(void) {
 	Asteroid_list * list;
 	list->list_size = ASTEROIDS_LIST_SIZE;
-	list->asteroids = malloc(sizeof(Asteroid)*list->list_size);
+	list->asteroids = (Asteroid*) malloc(sizeof(Asteroid)*list->list_size);
 	list->start_index = 0;
 	list->end_index = 0;
 	list->num_asteroids = 0;
