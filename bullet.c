@@ -19,6 +19,7 @@ Bullet new_bullet(Ship * ship, Vector pos, Vector vel, float angle, float lifeti
 	bullet.velocity = mult(bullet.velocity, BULLET_VELOCITY_FACTOR);
 	bullet.lifetime = lifetime;
 	bullet.time_created = time_created;
+	return bullet;
 };
 
 Bullet_Manager* new_bullet_manager(void) {
@@ -51,31 +52,67 @@ bool bullet_manager_full(Bullet_Manager* list) {
 		return false;
 }
 
+Asteroid * bullet_hit(Bullet_Manager* bm, Asteroid_list* al) {
+	uint16_t i;
+	uint16_t j;
+	int asteroid_width, asteroid_height;
+	Vector collision;
+	for(i = bm->start_index; i < bm->end_index; i++) {
+		Bullet bullet = bm->bullets[i % bm->size];
+		for(j = al->start_index; j < al->end_index; j++) {
+			Asteroid asteroid = al->asteroids[j];
+			if (asteroid.index < 0)
+				continue;
+			collision = sub(bullet.position,asteroid.position);
+			switch (asteroid.size) {
+				case 0:
+							asteroid_width = LARGE_ASTEROID_WIDTH;
+							asteroid_height = LARGE_ASTEROID_HEIGHT;
+							break;
+				case 1:
+							asteroid_width = MEDIUM_ASTEROID_WIDTH;
+							asteroid_height = MEDIUM_ASTEROID_HEIGHT;
+							break;
+				case 2:
+							asteroid_width = SMALL_ASTEROID_WIDTH;
+							asteroid_height = SMALL_ASTEROID_HEIGHT;
+			}
+			if((fabs(collision.x) <= (asteroid_width / 2)) && (fabs(collision.y) <= (asteroid_height / 2))) {
+				remove_bullet(bm, &bullet);
+				return &al->asteroids[j];
+			}
+		}
+	}
+	return NULL;
+};
+
 void update_bullets(Bullet_Manager* list) {
-	uint8_t i;
+	uint16_t i;
+	Bullet bullet;
 	for (i = list->start_index; i < list->end_index; i++) {
-		if (list->time - list->bullets[i].time_created > list->bullets[i].lifetime) { //remove bullet if it has exceeded its lifetime
+		bullet = list->bullets[i % list->size];
+		if (list->time - bullet.time_created > bullet.lifetime) { //remove bullet if it has exceeded its lifetime
 				remove_bullet(list,&list->bullets[i]);
 				continue;
 		}
-		list->bullets[i].position = add(list->bullets[i].position,list->bullets[i].velocity);
-		if (list->bullets[i].position.x > LCD_MAX_X) //wrap position
-			list->bullets[i].position.x = LCD_MIN;
-		else if (list->bullets[i].position.x < LCD_MIN)
-			list->bullets[i].position.y = LCD_MAX_X;
+		bullet.position = add(bullet.position,bullet.velocity);
+		if (bullet.position.x > LCD_MAX_X) //wrap position
+			bullet.position.x = LCD_MIN;
+		else if (bullet.position.x < LCD_MIN)
+			bullet.position.y = LCD_MAX_X;
 		
-		if(list->bullets[i].position.y > LCD_MAX_Y)
-			list->bullets[i].position.y = LCD_MIN;
-		else if (list->bullets[i].position.y < LCD_MIN)
-			list->bullets[i].position.y = LCD_MAX_Y;
+		if(bullet.position.y > LCD_MAX_Y)
+			bullet.position.y = LCD_MIN;
+		else if (bullet.position.y < LCD_MIN)
+			bullet.position.y = LCD_MAX_Y;
 	}
 	list->time++; //may want to use another method for updating manger's clock
 }
 
 void draw_bullets(Bullet_Manager* list) {
-	uint8_t i;
+	uint16_t i;
 	for (i = list->start_index; i <list->end_index; i++) {
-		lcd_draw_image(list->bullets[i].position.x,BULLET_SIZE,list->bullets[i].position.y,BULLET_SIZE,bullet,BULLET_COLOR, BACKGROUND_COLOR);
+		lcd_draw_image(list->bullets[i % list->size].position.x,BULLET_SIZE,list->bullets[i % list->size].position.y,BULLET_SIZE,bullet,BULLET_COLOR, BACKGROUND_COLOR);
 	}
 };
 

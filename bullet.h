@@ -43,6 +43,8 @@ bool bullet_manager_full(Bullet_Manager *); //returns true if bullet manager is 
 
 void update_bullets(Bullet_Manager* list);
 
+Asteroid * bullet_hit(Bullet_Manager*, Asteroid_list*);
+
 void draw_bullets(Bullet_Manager* list); 
 
 #endif

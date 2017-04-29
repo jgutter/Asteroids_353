@@ -17,7 +17,8 @@
 #define ASTEROID_COLOR LCD_COLOR_WHITE
 #define BACKGROUND_COLOR LCD_COLOR_BLACK
 
-#define SIZE_VELOCITY_FACTOR 1.15
+#define SIZE_VELOCITY_FACTOR 1
+#define BASE_VELOCITY 16
 
 typedef struct {
 	Vector position;
@@ -46,12 +47,12 @@ void add_asteroid(Asteroid_list* list, Asteroid * asteroid); //add asteroid to a
 
 void remove_asteroid(Asteroid_list* list, Asteroid * asteroid); //remove asteroid from asteroid list
 
-void update_asteroid(Asteroid_list* list);
+void update_asteroid(Asteroid_list* list); //update positions of Asteroids
 
-void draw_asteroids(Asteroid_list* list);
+void draw_asteroids(Asteroid_list* list); //draw asteroids to screen
 
-void split_asteroid(Asteroid_list * list, Asteroid*);
+void split_asteroid(Asteroid_list * list, Asteroid*); //split asteroid (remove 1 asteroid and add two smaller ones into list)
 
-int count_asteroid(Asteroid_list*);
+int count_asteroid(Asteroid_list*); //returns number of asteroids remaining
 
 #endif

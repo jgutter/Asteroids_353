@@ -52,9 +52,19 @@ void remove_asteroid(Asteroid_list* list, Asteroid* asteroid) {
 	list->num_asteroids--;
 };
 
-//TODO split asteroid
+// split asteroid
 void split_asteroid(Asteroid_list * list, Asteroid* asteroid){
-	
+	if(asteroid->size < 2) { //if asteroid is Large or medium
+		Asteroid ast1 = new_asteroid(asteroid->position,asteroid->velocity,asteroid->angle,asteroid->size+1); //make 2 new asteroids
+		Asteroid ast2 = new_asteroid(asteroid->position,asteroid->velocity,asteroid->angle,asteroid->size+1);
+		Vector split_vel = new_vector();
+		add_asteroid(list, &ast1); //first asteroid continues in same direction
+		split_vel.x = asteroid->velocity.y;
+		split_vel.y = asteroid->velocity.x;
+		ast2.velocity = split_vel;
+		add_asteroid(list,&ast2); //second asteroid continues in opposite direction
+	}
+	remove_asteroid(list,asteroid);
 }
 
 int count_asteroid(Asteroid_list* list) {
