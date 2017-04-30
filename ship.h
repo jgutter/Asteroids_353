@@ -5,6 +5,7 @@
 
 #include "vector.h"
 #include "lcd.h"
+#include "asteroid.h"
 
 #define MAX_SPEED 100 //max speed will need to be adjusted
 
@@ -13,6 +14,7 @@
 #define ACCELERATION_CONST 5 //acceleration constant for thrusting and deceleration
 
 #define ROTATE_INCR 10 //ship will rotate in 10 degree increments
+#define RESET_ANGLE 90
 
 #define SHIP_WIDTH 20 //may need to be adjusted
 #define SHIP_HEIGHT 23
@@ -40,6 +42,8 @@ void accelerate_ship(Ship* ship); //accelerate ship
 void rotate_ship_left(Ship* ship); //rotate ship left
 
 void rotate_ship_right(Ship* ship); //rotate ship right
+
+bool ship_asteroid_collision(Ship* ship, Asteroid_list* al);
 
 void update_ship(Ship * ship); //update ship's position vector
 

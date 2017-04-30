@@ -229,7 +229,7 @@ Ship new_ship(Vector pos, Vector vel) { //create a new ship at a position with a
 	Ship ship;
 	ship.position = pos;
 	ship.velocity = vel;
-	ship.angle = 90;
+	ship.angle = RESET_ANGLE;
 	ship.invincibility = SHIP_INVINCIBILITY;
 	return ship;
 };
@@ -239,7 +239,19 @@ void accelerate_ship(Ship* ship) { //accelerate ship
 	vel.y = (int) sin(PI * (ship->angle / 180));
 	vel.x = (int) cos(PI * (ship->angle / 180));
 	ship->velocity.x -= vel.x * ACCELERATION_CONST;
+	if (fabs(ship->velocity.x) > MAX_SPEED) { //cap speed in x direction
+		if (ship->velocity.x > 0)
+			ship->velocity.x = MAX_SPEED;
+		else
+			ship->velocity.x = -MAX_SPEED;
+	}
 	ship->velocity.y += vel.y * ACCELERATION_CONST;
+	if (fabs(ship->velocity.y) > MAX_SPEED) { //cap speed in y direction
+		if (ship->velocity.y > 0 )
+			ship->velocity.y = MAX_SPEED;
+		else
+			ship->velocity.y = -MAX_SPEED;
+	}
 };
 
 
@@ -263,6 +275,35 @@ void update_ship(Ship * ship) { //ship's movement does not include drag
 	else if (ship->position.y < LCD_MIN)
 		ship->position.y = LCD_MAX_Y;
 }
+
+bool ship_asteroid_collision(Ship* ship, Asteroid_list * al) {
+	uint16_t i;
+	uint8_t ship_width = SHIP_WIDTH;
+	uint8_t ship_height = SHIP_HEIGHT;
+	uint8_t asteroid_width, asteroid_height;
+	Vector collision;
+	for (i = al->start_index; i < al->end_index; i++) {
+		Asteroid asteroid = al->asteroids[i];
+		if (asteroid.index < 0)
+			continue;
+		collision = sub(ship->position,asteroid.position);
+		switch (asteroid.size) {
+			case 0:
+					asteroid_width = LARGE_ASTEROID_WIDTH;
+					asteroid_height = LARGE_ASTEROID_HEIGHT;
+			case 1:
+					asteroid_width = MEDIUM_ASTEROID_WIDTH;
+					asteroid_height = MEDIUM_ASTEROID_HEIGHT;
+			case 2:
+					asteroid_width = SMALL_ASTEROID_WIDTH;
+					asteroid_height = SMALL_ASTEROID_HEIGHT;
+		}
+		if ((fabs(collision.x) <= (asteroid_width / 2) + (ship_width / 2)) && (fabs(collision.y) <= (asteroid_height / 2) + (ship_height / 2))) {
+			return true;
+		}
+	}
+	return false;
+};
 
 void draw_ship(Ship * ship) {
 	uint8_t ship_indx = 0;

@@ -55,7 +55,7 @@ bool bullet_manager_full(Bullet_Manager* list) {
 Asteroid * bullet_hit(Bullet_Manager* bm, Asteroid_list* al) {
 	uint16_t i;
 	uint16_t j;
-	int asteroid_width, asteroid_height;
+	uint8_t asteroid_width, asteroid_height;
 	Vector collision;
 	for(i = bm->start_index; i < bm->end_index; i++) {
 		Bullet bullet = bm->bullets[i % bm->size];
@@ -79,6 +79,7 @@ Asteroid * bullet_hit(Bullet_Manager* bm, Asteroid_list* al) {
 			}
 			if((fabs(collision.x) <= (asteroid_width / 2)) && (fabs(collision.y) <= (asteroid_height / 2))) {
 				remove_bullet(bm, &bullet);
+				split_asteroid(al,&al->asteroids[j]);
 				return &al->asteroids[j];
 			}
 		}
@@ -86,7 +87,7 @@ Asteroid * bullet_hit(Bullet_Manager* bm, Asteroid_list* al) {
 	return NULL;
 };
 
-void update_bullets(Bullet_Manager* list) {
+void update_bullets(Bullet_Manager* list, float dt) {
 	uint16_t i;
 	Bullet bullet;
 	for (i = list->start_index; i < list->end_index; i++) {
@@ -106,7 +107,7 @@ void update_bullets(Bullet_Manager* list) {
 		else if (bullet.position.y < LCD_MIN)
 			bullet.position.y = LCD_MAX_Y;
 	}
-	list->time++; //may want to use another method for updating manger's clock
+	list->time+= dt; //(ADDRESSED)may want to use another method for updating manger's clock
 }
 
 void draw_bullets(Bullet_Manager* list) {

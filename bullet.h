@@ -41,7 +41,7 @@ void remove_bullet(Bullet_Manager* list, Bullet * bullet); //remove bullet from 
 
 bool bullet_manager_full(Bullet_Manager *); //returns true if bullet manager is full (ammo on cooldown)
 
-void update_bullets(Bullet_Manager* list);
+void update_bullets(Bullet_Manager* list, float);
 
 Asteroid * bullet_hit(Bullet_Manager*, Asteroid_list*);
 
