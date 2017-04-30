@@ -7,9 +7,10 @@
 #define SCREEN_CENTER_Y 160
 #define TEXT_COLOR LCD_COLOR_WHITE
 #define BACKGROUND_COLOR LCD_COLOR_BLACK
-#define HUD_LEFT_MARGIN 210 //may need to be adjusted
-#define HUD_SCORE_Y 280
-#define HUD_LIVES_Y 260
+#define HUD_LEFT_MARGIN 1 //may need to be adjusted
+#define HUD_SCORE_Y 1
+#define HUD_LIVES_Y 2
+#define ASTEROID_SCORE 100
 
 Game* new_game(void) {
 	Vector screen_center;
@@ -43,7 +44,7 @@ void update_game(Game* game, float dt) {
 	if(game->status != PLAYING)
 		return;
 	
-	update_asteroid(game->asteroids);
+	update_asteroids(game->asteroids);
 	update_bullets(game->bullets, dt);
 	update_game_ship(game, dt);
 	game->current_time += dt;
@@ -74,11 +75,12 @@ void draw_game(Game*g) {
 };
 
 void draw_hud(Game* g) {
-	int lives = g->lives;
-	uint16_t x, y;
-	lcd_draw_image(
-	
-	
+	char lives[10] = "Lives: ";
+	char score_buffer[20] = "Score: ";
+	snprintf(score_buffer+7, (sizeof(char)*13), "%d", g->score);
+	lcd_print_stringXY(score_buffer,HUD_LEFT_MARGIN,HUD_SCORE_Y,TEXT_COLOR, BACKGROUND_COLOR);
+	snprintf(lives+7, (sizeof(char)*3), "%d", g->lives);
+	lcd_print_stringXY(lives,HUD_LEFT_MARGIN,HUD_LIVES_Y, TEXT_COLOR, BACKGROUND_COLOR);
 };
 
 void draw_win(Game* g) {

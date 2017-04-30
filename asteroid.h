@@ -47,7 +47,7 @@ void add_asteroid(Asteroid_list* list, Asteroid * asteroid); //add asteroid to a
 
 void remove_asteroid(Asteroid_list* list, Asteroid * asteroid); //remove asteroid from asteroid list
 
-void update_asteroid(Asteroid_list* list); //update positions of Asteroids
+void update_asteroids(Asteroid_list* list); //update positions of Asteroids
 
 void draw_asteroids(Asteroid_list* list); //draw asteroids to screen
 
