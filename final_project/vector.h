@@ -4,9 +4,16 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
+
+#define PI 3.1415926
+#define LCD_MAX_X 239
+#define LCD_MAX_Y 319
+#define LCD_MIN 0
+
 
 typedef struct { //define vector structure for other modules
-	int x, y;
+	float x, y;
 	} Vector;
 
 Vector new_vector(void); //create and initialize vector struct

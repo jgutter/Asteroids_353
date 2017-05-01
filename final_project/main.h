@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-
+#include "game.h"
 #include "TM4C123.h"
 
 extern void serialDebugInit(void);

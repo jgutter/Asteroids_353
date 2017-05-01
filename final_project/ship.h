@@ -4,6 +4,8 @@
 #define __SHIP_H__
 
 #include "vector.h"
+#include "lcd.h"
+#include "asteroid.h"
 
 #define MAX_SPEED 100 //max speed will need to be adjusted
 
@@ -11,7 +13,15 @@
 
 #define ACCELERATION_CONST 5 //acceleration constant for thrusting and deceleration
 
-#define ROTATE_INCR 5 //ship will rotate in 5 degree increments
+#define ROTATE_INCR 10 //ship will rotate in 10 degree increments
+#define RESET_ANGLE 90
+
+#define SHIP_WIDTH 20 //may need to be adjusted
+#define SHIP_HEIGHT 23
+
+#define SHIP_COLOR LCD_COLOR_WHITE
+
+#define BACKGROUND_COLOR LCD_COLOR_BLACK
 
 typedef struct {
 	
@@ -29,10 +39,14 @@ Ship new_ship(Vector pos, Vector vel); //create a new ship at a position with a 
 
 void accelerate_ship(Ship* ship); //accelerate ship
 
-void deccelerate_ship(Ship* ship); //deccelerate ship
-
 void rotate_ship_left(Ship* ship); //rotate ship left
 
 void rotate_ship_right(Ship* ship); //rotate ship right
+
+bool ship_asteroid_collision(Ship* ship, Asteroid_list* al); //detect if ship has collided with an asteroid
+
+void update_ship(Ship * ship); //update ship's position vector
+
+void draw_ship(Ship * ship); //draw ship to LCD screen
 
 #endif

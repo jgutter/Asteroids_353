@@ -24,6 +24,7 @@
 #include "timers.h"
 #include "ps2.h"
 #include "launchpad_io.h"
+#include "ece353_hw2_fonts.h"
 #include "lcd.h"
 #include "timers.h"
 #include <stdbool.h>
@@ -34,17 +35,23 @@
 #define TEN_MS 							5000
 //30 miliseconds realize from launchpad clock frequency: 50MHz / 33.3Hz = 1500000; 1500000 / 100(prescale) = 15000
 #define THIRTY_MS 					15000
+
 #define PS2_HIGH_THRESHOLD 	3072
 #define PS2_LOW_THRESHOLD 	1024
+
 #define CURSOR_HEIGHT				1
 #define	CURSOR_WIDTH				1
 #define CENTERED_X					120
 #define CENTERED_Y					160
+
 #define BACKGROUND_COLOR		LCD_COLOR_BLACK
 #define LCD_X_MAX						239
 #define LCD_Y_MAX						319
 #define LCD_X_MIN						0
 #define LCD_Y_MIN						0
+
+//CHECK
+float curr_time; 
 
 char group[] = "Group22";
 char individual_1[] = "Justin Gutter";
@@ -52,25 +59,14 @@ char individual_2[] = "Sadeq Hashemi";
 
 typedef enum 
 {
-  DEBOUNCE_ONE,
-  DEBOUNCE_1ST_ZERO,
-  DEBOUNCE_2ND_ZERO,
-	DEBOUNCE_3RD_ZERO,
-	DEBOUNCE_4TH_ZERO,
-	DEBOUNCE_5TH_ZERO,
-	DEBOUNCE_6TH_ZERO,
-  DEBOUNCE_PRESSED
-} DEBOUNCE_STATES; //6 debounce states for 6 passes through TimerA (6*10ms = 60ms)
+  MAIN_MENU,
+  IN_GAME, 
+	DISPLAY_HIGH_SCORE,
+} MODE_t; 		//MODE states
 
-typedef enum 
-{
-  DRAW,
-  MOVE_ERASE
-} MODE_state; 		//MODE states
-
-int screen_map[240][320];
 bool sw1_pressed;
 bool sw2_pressed;
+bool io_down_pressed;
 volatile bool ALERT_ADC_UPDATE; 	//Update PS2 ADC values; triggered by TimerB
 volatile bool TIMERB_ALERT; 			//Timer B ISR flag
 volatile bool TIMERA_ALERT;				//Timer A ISR flag
@@ -90,141 +86,24 @@ int oldY_pos = CENTERED_Y;											//old Y coordinate for MOVE mode re-drawing
 int PS2_X;												//PS2 controller X value
 int PS2_Y;												//PS2 controller Y value
 
-MODE_state mode;									//mode state enumeration
+MODE_t mode;									//mode state enumeration
 
-const uint8_t cursor[] = {0x80}; 	//single pixel cursor
-uint16_t cursor_color;						//cursor color used in draw and move/erase mode
 
 bool sw1_debounce_fsm(void) 			//debounce SW1 state machine
 {
-  static DEBOUNCE_STATES state = DEBOUNCE_ONE;
   bool pin_logic_level;
-  
+  static int debounce_sw1 = 0;
   pin_logic_level = lp_io_read_pin(SW1_BIT);
   
-  switch (state)
-  {
-    case DEBOUNCE_ONE:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_1ST_ZERO;
-      }
-      break;
-    }
-    case DEBOUNCE_1ST_ZERO:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_2ND_ZERO;
-      }
-      break;
-    }
-    case DEBOUNCE_2ND_ZERO:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_3RD_ZERO;
-      }
-      break;
-    }
-		    case DEBOUNCE_3RD_ZERO:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_4TH_ZERO;
-      }
-      break;
-    }
-		    case DEBOUNCE_4TH_ZERO:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_5TH_ZERO;
-      }
-      break;
-    }
-		    case DEBOUNCE_5TH_ZERO:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_6TH_ZERO;
-      }
-      break;
-    }
-		    case DEBOUNCE_6TH_ZERO:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_PRESSED;
-      }
-      break;
-    }
-    case DEBOUNCE_PRESSED:
-    {
-      if(pin_logic_level)
-      {
-        state = DEBOUNCE_ONE;
-      }
-      else
-      {
-        state = DEBOUNCE_PRESSED;
-      }
-      break;
-    }
-    default:
-    {
-      while(1){};
-    }
-  }
-  
-  if(state == DEBOUNCE_6TH_ZERO )
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
-}
-
-void clear_array(void) {
-	int i;
-	int j;
-	for (i = 0; i <= LCD_X_MAX; i++) {
-		for(j = 0; j <= LCD_Y_MAX; j++) {
-		//	screen_map[i][j] = 0;
-		}
-		
-	}
+	if (pin_logic_level)
+		debounce_sw1 = 0;
+	else
+		debounce_sw1++;
+	
+	if(debounce_sw1 > 6)
+		return true;
+	else
+		return false;
 }
 
 //*****************************************************************************
@@ -239,7 +118,7 @@ void clear_array(void) {
 *  
 *
 *******************************************************************************/
-void MOVE_CURSOR(){
+void MOVE_SHIP(Game* myGame){
 
 //if the x direction of joystick is holding a voltage higher than  three quarters of maximum, 
 //increment the x postion, if at the extremity, then wrap	
@@ -271,11 +150,6 @@ if(PS2_Y > PS2_HIGH_THRESHOLD){
 	Y_pos++;
 	if(Y_pos > LCD_Y_MAX)
 		Y_pos = LCD_Y_MIN;
-	/*
-	if((Y_pos + 1) > lcd_Y_max)
-					Y_pos = lcd_Y_min;		
-		else  Y_pos++;
-	*/
 }	
 
 //if the y direction of joystick is holding a voltage lower than quarter of maximum, 
@@ -295,7 +169,7 @@ else if(PS2_Y < PS2_LOW_THRESHOLD){
 //*****************************************************************************
 void initialize_hardware(void)
 {
-  initialize_serial_debug();
+  init_serial_debug(true, true);
 	lp_io_init(); //initialize Launchpad LED's and Push Buttons
 	ps2_initialize(); //initialize GPIO pins connected PS2 Joystick
 	lcd_config_gpio(); //initialize GPIO pins connected to LCD display
@@ -335,24 +209,48 @@ void ADC0SS2_Handler(void) { //Sample sequencer 2 interrupt handler
 	
 }
 
-void mode_fsm(void) {
+bool new_highscore(Game* myGame){
+	//TODO
+	return false;
+}
+
+void mode_fsm(Game* myGame) {
+	Bullet newBullet;
+	
 	switch (mode) {
-		case DRAW:
-			if (sw1_pressed)
-					mode = MOVE_ERASE;
-			else {
-					cursor_color = LCD_COLOR_GREEN;
-					lcd_draw_image(X_pos,CURSOR_WIDTH, Y_pos, CURSOR_HEIGHT, cursor, cursor_color,BACKGROUND_COLOR);
-					screen_map[X_pos][Y_pos] = 1;
+		
+		case MAIN_MENU:{
+			welcome_screen();	//prints the main menu
+		
+			if (start_pressed())
+					mode = GAME;
+			
+			else if(highscore_pressed())
+					mode = HIGH_SCORE; 
+		
+					
 			}
 		break;
-		case MOVE_ERASE:
-			if (sw1_pressed)
-					mode = DRAW;
+			
+		case GAME:
+			if (myGame->status == LOSE){		
+					if(new_highscore(myGame)) 		mode = HIGH_SCORE;
+				
+						else mode = MAIN_MENU;		
+			}
 			else {
-					cursor_color = LCD_COLOR_RED;
-					lcd_draw_image(X_pos,CURSOR_WIDTH, Y_pos, CURSOR_HEIGHT, cursor, cursor_color,BACKGROUND_COLOR);
-					if (!lp_io_read_pin(SW2_BIT)) { //erase mode
+					lcd_clear_screen(LCD_COLOR_BLACK);
+				
+					MOVE_SHIP(myGame);	//update ship
+					if(){
+						newBullet = new_bullet(&(myGame->ship), BULLET_LIFETIME, curr_time);
+						fire_bullet((myGame->bullets), &newBullet);
+					}
+					
+					update_game(myGame);
+					draw_game(myGame);
+					
+				if (!lp_io_read_pin(SW2_BIT)) { //erase mode
 						lcd_draw_image(oldX_pos,CURSOR_WIDTH, oldY_pos, CURSOR_HEIGHT, cursor, BACKGROUND_COLOR,BACKGROUND_COLOR);
 						screen_map[oldX_pos][oldY_pos] = 0;
 					}
@@ -365,12 +263,19 @@ void mode_fsm(void) {
 					}
 			}
 		break;
+			
+		case HIGH_SCORE:
+			
+		break; 
+		
+		
 		default:
-		mode = DRAW; //default into DRAW state if fsm goes into an unexpected state
+		mode = MAIN_MENU; //default into DRAW state if fsm goes into an unexpected state
 	}
 	
 	
 }
+
 
 int	main(void)
 {
@@ -432,7 +337,7 @@ int	main(void)
 		for(count = 0; count <100000; count++)
 			{}
 		
-		MOVE_CURSOR();
+		MOVE_SHIP();
 		mode_fsm();
 			
 			

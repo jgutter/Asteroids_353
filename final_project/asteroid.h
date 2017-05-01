@@ -1,89 +1,58 @@
-#ifndef __asteroid__
-#define __asteroid__
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <time.h>
+#ifndef __ASTEROID_H__
+#define __ASTEROID_H__
+
+#include "vector.h"
 #include "lcd.h"
+#include <stdlib.h>
+#define ASTEROIDS_LIST_SIZE 128
 
+//ADD CODE
+#define LARGE_ASTEROID_HEIGHT	0
+#define LARGE_ASTEROID_WIDTH	0
+#define MEDIUM_ASTEROID_HEIGHT	0
+#define MEDIUM_ASTEROID_WIDTH	0
+#define SMALL_ASTEROID_HEIGHT	0
+#define SMALL_ASTEROID_WIDTH	0
+#define ASTEROID_COLOR LCD_COLOR_WHITE
+#define BACKGROUND_COLOR LCD_COLOR_BLACK
 
-#define       LCD_X_MAX     239
-#define       LCD_X_MIN      0
-#define				LCD_Y_MAX			319
-#define				LCD_Y_MIN			0
+#define SIZE_VELOCITY_FACTOR 1
+#define BASE_VELOCITY 16
 
-#define				CONST_X_VEL		0
-#define 			CONST_Y_VEL		0
+typedef struct {
+	Vector position;
+	Vector velocity;
+	uint16_t angle;
+	uint8_t size;		//size definition: 0 LARGE; 1 MEDIUM; 2 SMALL
+	int index; //index of this asteroid in list
+} Asteroid;
 
-#define 			LARGE_WIDTH		56
-#define 			LARGE_HEIGHT	50
-#define 			MED_WIDTH 		28
-#define 			MED_HEIGHT 		25 
-#define 			SMALL_WIDTH		8
-#define 			SMALL_HEIGHT	13
+Asteroid new_asteroid(Vector pos, Vector vel, uint16_t angle, uint8_t size);
 
-#define				LARGE_AST			2
-#define 			MED_AST				1
-#define				SMALL_AST			0
+typedef struct {
+	Asteroid * asteroids;
+	int start_index;
+	int end_index;
+	uint16_t list_size;
+	int num_asteroids;
+} Asteroid_list; //List of Asteroids (circular array)
 
-/* Font data for Sitka Small 12pt */
-extern const uint8_t asteroidBitmaps[];
+Asteroid_list* new_asteroid_list(void); //dynamically allocate an asteroid list
 
-extern int screen_map[240][40];	//external array that holds all used screen pixels 
+void free_asteroid_list(Asteroid_list* list); //free memory for asteroid list
 
-typedef struct
-{
-  uint16_t Xpos;				//current X coordinate on LCD
-  uint16_t Ypos;				//current Y coordiante on LCD
-	uint8_t Xvelocity;	//rotational velocity
-	uint8_t Yvelocity;	//translational velocity 
-	uint8_t size;				//three different valid values for different sizes
-											//0=small 1=medium 2=big	
-	uint8_t isDead;			//indicates if ship is hit 
-} asteroid;
+//add asteroid to list
+void add_asteroid(Asteroid_list* list, Asteroid * asteroid); //add asteroid to asteroid list
 
+void remove_asteroid(Asteroid_list* list, Asteroid * asteroid); //remove asteroid from asteroid list
 
-/**********************************************************
-* Function Name: initialize_asteroid
-**********************************************************
-* Summary: initializes asteroid with give size at a 
-* random empty location.
-*
-* Returns: true if successful
-**********************************************************/
-bool initialize_asteroid(asteroid* myAsteroid, uint8_t size);
-	
+void update_asteroids(Asteroid_list* list); //update positions of Asteroids
 
+void draw_asteroids(Asteroid_list* list); //draw asteroids to screen
 
-/**********************************************************
-* Function Name: lcd_print_asteroid
-**********************************************************
-* Summary: prints given asteroid with foreground color as fg_color
-* and background color as bg_color
-*
-* Returns:
-*  Nothing
-**********************************************************/
-void lcd_print_asteroid(
-		asteroid * myAsteroid,
-    uint16_t fg_color, 
-    uint16_t bg_color
-);
+void split_asteroid(Asteroid_list * list, Asteroid*); //split asteroid (remove 1 asteroid and add two smaller ones into list)
 
+int count_asteroid(Asteroid_list*); //returns number of asteroids remaining
 
-
-/**********************************************************
-* Function Name: lcd_print_asteroid
-**********************************************************
-* Summary: prints given asteroid 
-*
-*
-* Returns:
-*  Nothing
-**********************************************************/
-void move_asteroid(asteroid * myAsteroid);
-    
 #endif
