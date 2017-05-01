@@ -10,14 +10,14 @@ const uint8_t bullet[] =
 	0x80
 };
 
-Bullet new_bullet(Ship * ship, Vector pos, Vector vel, float angle, float lifetime, float time_created){
+Bullet new_bullet(Ship * ship, float time_created){
 	Bullet bullet;
 	bullet.velocity.y = (float) sin(PI * (ship->angle / 180));
 	bullet.velocity.x = (float) cos(PI * (ship->angle / 180));
 	bullet.position = ship->position;
 	bullet.angle = 0;
 	bullet.velocity = mult(bullet.velocity, BULLET_VELOCITY_FACTOR);
-	bullet.lifetime = lifetime;
+	bullet.lifetime = BULLET_LIFETIME;
 	bullet.time_created = time_created;
 	return bullet;
 };

@@ -39,17 +39,8 @@
 #define PS2_HIGH_THRESHOLD 	3072
 #define PS2_LOW_THRESHOLD 	1024
 
-#define CURSOR_HEIGHT				1
-#define	CURSOR_WIDTH				1
-#define CENTERED_X					120
-#define CENTERED_Y					160
-
 #define BACKGROUND_COLOR		LCD_COLOR_BLACK
-#define LCD_X_MAX						239
-#define LCD_Y_MAX						319
-#define LCD_X_MIN						0
-#define LCD_Y_MIN						0
-
+#define TEXT_COLOR					LCD_COLOR_WHITE
 //CHECK
 float curr_time; 
 
@@ -64,24 +55,15 @@ typedef enum
 	DISPLAY_HIGH_SCORE,
 } MODE_t; 		//MODE states
 
-bool sw1_pressed;
-bool sw2_pressed;
-bool io_down_pressed;
+bool sw1_pressed, sw1_pressed, io_down_pressed;
+bool ps2_accerlate, ps2_rotate_left, ps2_rotate_right;
 volatile bool ALERT_ADC_UPDATE; 	//Update PS2 ADC values; triggered by TimerB
 volatile bool TIMERB_ALERT; 			//Timer B ISR flag
 volatile bool TIMERA_ALERT;				//Timer A ISR flag
+Game* main_game;
 
 static int count_B = 0; 					//private variable to count number of  Timer B interrupts
 static int count_A = 0; 					//private variable to count number of Timer A interrupts
-
-bool blue_LED_on = false;					//Blue LED boolean value used by TimerA ISR
-bool green_LED_on = false;				//Green LED boolean value used by TimerB ISR
-
-int X_pos = CENTERED_X;						//X position of cursor; initialized to middle of X-axis
-int Y_pos = CENTERED_Y;						//Y position of cursor; initialized to middle of Y-axis
-
-int oldX_pos = CENTERED_X;											//old X coordinate for MOVE mode re-drawing
-int oldY_pos = CENTERED_Y;											//old Y coordinate for MOVE mode re-drawing
 
 int PS2_X;												//PS2 controller X value
 int PS2_Y;												//PS2 controller Y value
@@ -118,50 +100,17 @@ bool sw1_debounce_fsm(void) 			//debounce SW1 state machine
 *  
 *
 *******************************************************************************/
-void MOVE_SHIP(Game* myGame){
+void queue_command(Game* myGame){
 
-//if the x direction of joystick is holding a voltage higher than  three quarters of maximum, 
-//increment the x postion, if at the extremity, then wrap	
-if(PS2_X > PS2_HIGH_THRESHOLD){
-		if (PS2_Y > PS2_LOW_THRESHOLD && PS2_Y < PS2_HIGH_THRESHOLD)
-					oldY_pos = Y_pos;					//update old Y position when not moving diagonally
-		oldX_pos = X_pos; //save old position
-		if((X_pos + 1) > LCD_X_MAX)
-					X_pos = LCD_X_MIN;		
-		else  X_pos++; 
+if(PS2_X > PS2_HIGH_THRESHOLD){ //queue up rotate right command
+		ps2_rotate_right = true;
 }	
-
-//if the x direction of joystick is holding a voltage lower than quarter of maximum, 
-//decrement the x postion, if at the lower extremity, then wrap
-else if(PS2_X < PS2_LOW_THRESHOLD){
-		if (PS2_Y > PS2_LOW_THRESHOLD && PS2_Y < PS2_HIGH_THRESHOLD)
-					oldY_pos = Y_pos;
-		oldX_pos = X_pos;  //save old position
-		if((X_pos - 1) < LCD_X_MIN)
-					X_pos = LCD_X_MAX;
-		else 	X_pos--; 
+else if(PS2_X < PS2_LOW_THRESHOLD){ //queue up rotate left command
+	ps2_rotate_left = true;
 }
-//if the y direction of joystick is holding a voltage higher than three quarters of maximum, 
-//increment the y postion, if at the extremity, then wrap	
-if(PS2_Y > PS2_HIGH_THRESHOLD){
-		if (PS2_X > PS2_LOW_THRESHOLD && PS2_X < PS2_HIGH_THRESHOLD)
-				oldX_pos = X_pos;
-	oldY_pos = Y_pos;  //save old position
-	Y_pos++;
-	if(Y_pos > LCD_Y_MAX)
-		Y_pos = LCD_Y_MIN;
-}	
 
-//if the y direction of joystick is holding a voltage lower than quarter of maximum, 
-//decrement the y postion, if at the lower extremity, then wrap
-else if(PS2_Y < PS2_LOW_THRESHOLD){
-		if (PS2_X > PS2_LOW_THRESHOLD && PS2_X < PS2_HIGH_THRESHOLD)
-				oldX_pos = X_pos;
-		oldY_pos = Y_pos;  //save old position
-	
-		Y_pos--;
-		if(Y_pos < LCD_Y_MIN)
-			Y_pos = LCD_Y_MAX;
+if(PS2_Y > PS2_HIGH_THRESHOLD){ //queue up an accelerate command
+		ps2_accerlate = true;
 }	
 }
 
@@ -205,79 +154,72 @@ void TIMER0B_Handler(void) { //interrupt handler for timerB
 void ADC0SS2_Handler(void) { //Sample sequencer 2 interrupt handler
 	ALERT_ADC_UPDATE = true;
 	((ADC0_Type *)ADC0_BASE)->ISC |= ADC_ISC_IN2;
-	
-	
 }
-
-void 
 
 bool new_highscore(Game* myGame){
 	//TODO
 	return false;
 }
 
-int menu_pressed(void) {
-	
-	if
+void draw_main_menu(void) {
+	char buffer1[10] = "Welcome to";
+	char buffer2[10] = "Asteroids!";
+	char buffer3[10] = "Touch to:";
+	char buffer4[16] = "Start a New Game";
+	char buffer5[10] = "Check the High Score";
+	lcd_print_stringXY(buffer, 6, 9, TEXT_COLOR, BACKGROUND_COLOR);
+}
 
-void mode_fsm(Game* myGame) {
+int menu_pressed(void) { //return 1 if new game pressed; return 2 if high score pressed; return 0 otherwise
+	
+}
+
+void mode_fsm() {
 	Bullet newBullet;
 	
 	switch (mode) {
 		
 		case MAIN_MENU:{
-				draw_welcome_screen();	//prints the main menu
-		
-			if ()
-					mode = GAME;
-			
-			else if(highscore_pressed())
-					mode = DISPLAY_HIGH_SCORE; 
-		
-					
+			draw_main_menu();	//prints the main menu
+			switch (menu_pressed()) {
+				case 1:
+					mode = IN_GAME;
+					main_game = new_game();
+					break;
+				case 2:
+					mode = DISPLAY_HIGH_SCORE;
+					break;
+				default:
+					mode = MAIN_MENU;
 			}
+		}
 		break;
-			
-		case GAME:
-			if (myGame->status == LOSE || myGame->status == WIN){		
-					if(new_highscore(myGame)) 		
-							mode = HIGH_SCORE;
+		case IN_GAME:
+			if (main_game->status == LOSE || main_game->status == WIN){		
+					if(new_highscore(main_game)) 		
+							mode = DISPLAY_HIGH_SCORE;
 				
 						else mode = MAIN_MENU;		
 			}
 			else {
+					queue_command(main_game);
 					lcd_clear_screen(LCD_COLOR_BLACK);
-				
-					MOVE_SHIP(myGame);	//update ship
-					if(){
-						newBullet = new_bullet(&(myGame->ship), BULLET_LIFETIME, curr_time);
-						fire_bullet((myGame->bullets), &newBullet);
+					if(io_down_pressed){
+						newBullet = new_bullet(&(main_game->ship), main_game->bullets->time);
+						fire_bullet((main_game->bullets), &newBullet);
 					}
-					
-					update_game(myGame);
-					draw_game(myGame);
-					
-				if (!lp_io_read_pin(SW2_BIT)) { //erase mode
-						lcd_draw_image(oldX_pos,CURSOR_WIDTH, oldY_pos, CURSOR_HEIGHT, cursor, BACKGROUND_COLOR,BACKGROUND_COLOR);
-						screen_map[oldX_pos][oldY_pos] = 0;
-					}
-					else {			//move mode
-							if (screen_map[oldX_pos][oldY_pos] == 1) {
-									lcd_draw_image(oldX_pos,CURSOR_WIDTH, oldY_pos, CURSOR_HEIGHT, cursor, LCD_COLOR_GREEN,BACKGROUND_COLOR);
-							}else {
-									lcd_draw_image(oldX_pos,CURSOR_WIDTH, oldY_pos, CURSOR_HEIGHT, cursor, BACKGROUND_COLOR,BACKGROUND_COLOR);
-							}
-					}
+					update_game(main_game);
+					draw_game(main_game);
 			}
 		break;
 			
-		case HIGH_SCORE:
+		case DISPLAY_HIGH_SCORE:
 			
 		break; 
 		
 		
 		default:
-		mode = MAIN_MENU; //default into DRAW state if fsm goes into an unexpected state
+			mode = MAIN_MENU;
 	}
 	
 	
@@ -308,31 +250,11 @@ int	main(void)
   // Reach infinite loop
   while(1){
 		if (TIMERB_ALERT) {
-				if (count_B == 9) { //toggle green LED every 10 TimerB ISR executions
-				green_LED_on = !green_LED_on;
-				if (green_LED_on)
-				lp_io_set_pin(GREEN_BIT);
-				else
-				lp_io_clear_pin(GREEN_BIT);
-				count_B = 0;
-				} else {	//if 10 executions has not occured; increment count & turn off green LED
-				count_B++;
-				}
+				
 				TIMERB_ALERT = false; //clear flag
 		}
 		if (TIMERA_ALERT) {
 				sw1_pressed = sw1_debounce_fsm(); //check if debounced sw1 has been pressed
-				if (count_A == 9) { //toggle blue LED every 10 TimerA ISR executions
-				blue_LED_on = !blue_LED_on;
-					if (blue_LED_on)
-						lp_io_set_pin(BLUE_BIT);
-					else
-						lp_io_clear_pin(BLUE_BIT);
-					count_A = 0;
-				} 
-				else {	//if 10 executions has not occured; increment count & turn off blue LED
-					count_A++;
-				}
 				TIMERA_ALERT = false; //clear flag
 		}
 		if (ALERT_ADC_UPDATE) {
@@ -341,12 +263,7 @@ int	main(void)
 			ALERT_ADC_UPDATE = false;
 		}
 		
-		for(count = 0; count <100000; count++)
-			{}
-		
-		MOVE_SHIP();
-		mode_fsm();
-			
-			
+		mode_fsm(); //99.9% of game occurs within mode_fsm
+				
   };
 }

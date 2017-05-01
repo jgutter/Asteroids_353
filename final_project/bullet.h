@@ -21,7 +21,7 @@ typedef struct {
 	float time_created;
 } Bullet;
 
-Bullet new_bullet(Ship* ship, Vector pos, Vector vel, float angle, float lifetime, float time_created);
+Bullet new_bullet(Ship* ship, float time_created);
 
 typedef struct {
 	Bullet * bullets;

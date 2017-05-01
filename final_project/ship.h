@@ -16,11 +16,12 @@
 #define ROTATE_INCR 10 //ship will rotate in 10 degree increments
 #define RESET_ANGLE 90
 
+#define BITMAP_REF 	36	//for properly indexing into bitmap array
 #define SHIP_WIDTH 20 //may need to be adjusted
 #define SHIP_HEIGHT 23
 
 #define SHIP_COLOR LCD_COLOR_WHITE
-
+#define INVINCIBILE_SHIP LCD_COLOR_YELLOW
 #define BACKGROUND_COLOR LCD_COLOR_BLACK
 
 typedef struct {
