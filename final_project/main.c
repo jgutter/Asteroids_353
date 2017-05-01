@@ -209,10 +209,16 @@ void ADC0SS2_Handler(void) { //Sample sequencer 2 interrupt handler
 	
 }
 
+void 
+
 bool new_highscore(Game* myGame){
 	//TODO
 	return false;
 }
+
+int menu_pressed(void) {
+	
+	if
 
 void mode_fsm(Game* myGame) {
 	Bullet newBullet;
@@ -220,21 +226,22 @@ void mode_fsm(Game* myGame) {
 	switch (mode) {
 		
 		case MAIN_MENU:{
-			welcome_screen();	//prints the main menu
+				draw_welcome_screen();	//prints the main menu
 		
-			if (start_pressed())
+			if ()
 					mode = GAME;
 			
 			else if(highscore_pressed())
-					mode = HIGH_SCORE; 
+					mode = DISPLAY_HIGH_SCORE; 
 		
 					
 			}
 		break;
 			
 		case GAME:
-			if (myGame->status == LOSE){		
-					if(new_highscore(myGame)) 		mode = HIGH_SCORE;
+			if (myGame->status == LOSE || myGame->status == WIN){		
+					if(new_highscore(myGame)) 		
+							mode = HIGH_SCORE;
 				
 						else mode = MAIN_MENU;		
 			}
