@@ -1,5 +1,11 @@
 --cpu Cortex-M4.fp
 ".\obj\main.o"
+".\obj\vector.o"
+".\obj\ship.o"
+".\obj\asteroid.o"
+".\obj\bullet.o"
+".\obj\game.o"
+".\obj\ece353_hw2_fonts.o"
 ".\obj\adc.o"
 ".\obj\gpio_port.o"
 ".\obj\timers.o"

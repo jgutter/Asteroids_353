@@ -1231,16 +1231,16 @@ ARM Macro Assembler    Page 19
               00000000 
 Command Line: --debug --xref --cpu=Cortex-M4.fp --apcs=interwork --depend=.\obj
 \startup_tm4c123.d -o.\obj\startup_tm4c123.o -I\\userspace.cae.wisc.edu\people\
-j\jgutter\ece353\HW3\RTE -IC:\AppV\mdk_510\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Inclu
-de -IC:\AppV\mdk_510\ARM\PACK\Keil\TM4C_DFP\1.0.0\Device\Include\TM4C123 --pred
+j\jgutter\ece353\final_project\RTE -IC:\AppV\mdk_510\ARM\PACK\ARM\CMSIS\4.1.1\C
+MSIS\Include -IC:\AppV\mdk_510\ARM\PACK\Keil\TM4C_DFP\1.0.0\Device\Include\TM4C
 
 
 
 ARM Macro Assembler    Page 20 
 
 
-efine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" --list=.\lst\startup_tm4c
-123.lst RTE\Device\TM4C123GH6PM\startup_TM4C123.s
+123 --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" --list=.\lst\st
+artup_tm4c123.lst RTE\Device\TM4C123GH6PM\startup_TM4C123.s
 
 
 

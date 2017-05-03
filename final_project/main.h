@@ -26,7 +26,18 @@
 #include <stdint.h>
 #include <string.h>
 #include "game.h"
+#include "vector.h"
+#include "bullet.h"
+#include "game.h"
+#include "ship.h"
+#include "ece353_hw2_fonts.h"
+#include <launchpad_io.h>
+#include <serial_debug.h>
+#include <eeprom.h>
+#include <string.h>
+#include <wireless.h>
 #include "TM4C123.h"
+#include "ft6x06.h"
 
 extern void serialDebugInit(void);
 

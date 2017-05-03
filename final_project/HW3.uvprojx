@@ -419,6 +419,61 @@
               <FileType>5</FileType>
               <FilePath>.\vector.h</FilePath>
             </File>
+            <File>
+              <FileName>vector.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\vector.c</FilePath>
+            </File>
+            <File>
+              <FileName>ship.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ship.c</FilePath>
+            </File>
+            <File>
+              <FileName>asteroid.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\asteroid.h</FilePath>
+            </File>
+            <File>
+              <FileName>Object.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Object.h</FilePath>
+            </File>
+            <File>
+              <FileName>asteroid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\asteroid.c</FilePath>
+            </File>
+            <File>
+              <FileName>game.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\game.h</FilePath>
+            </File>
+            <File>
+              <FileName>bullet.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\bullet.h</FilePath>
+            </File>
+            <File>
+              <FileName>bullet.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\bullet.c</FilePath>
+            </File>
+            <File>
+              <FileName>game.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\game.c</FilePath>
+            </File>
+            <File>
+              <FileName>ece353_hw2_fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ece353_hw2_fonts.c</FilePath>
+            </File>
+            <File>
+              <FileName>ece353_hw2_fonts.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\ece353_hw2_fonts.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -458,6 +513,16 @@
               <FileName>ps2.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\peripherals\c\ps2.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft6x06.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\peripherals\c\ft6x06.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft6x06.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\peripherals\include\ft6x06.h</FilePath>
             </File>
           </Files>
         </Group>

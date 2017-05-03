@@ -7,18 +7,21 @@
 #include "lcd.h"
 #include "asteroid.h"
 
-#define MAX_SPEED 100 //max speed will need to be adjusted
+#define MAX_SPEED 5 //max speed will need to be adjusted
 
-#define SHIP_INVINCIBILITY 2 //ship will be invincibile for 2 seconds on a new life
+#define SHIP_INVINCIBILITY 5 //ship will be invincibile for 1 second on a new life
 
-#define ACCELERATION_CONST 5 //acceleration constant for thrusting and deceleration
+#define ACCELERATION_CONST 1 //acceleration constant for accelerating
 
 #define ROTATE_INCR 10 //ship will rotate in 10 degree increments
 #define RESET_ANGLE 90
 
 #define BITMAP_REF 	36	//for properly indexing into bitmap array
-#define SHIP_WIDTH 20 //may need to be adjusted
-#define SHIP_HEIGHT 23
+#define SHIP_WIDTH 24 	
+#define SHIP_HEIGHT 24
+#define CANVAS_WIDTH 30
+#define CANVAS_HEIGHT 30
+
 
 #define SHIP_COLOR LCD_COLOR_WHITE
 #define INVINCIBILE_SHIP LCD_COLOR_YELLOW
@@ -30,9 +33,9 @@ typedef struct {
 	
 	Vector velocity; //velocity of ship
 	
-	int angle;				//angle of ship in degrees
+	float angle;				//angle of ship in degrees
 	
-	int invincibility;	//seconds of invincibility
+	float invincibility;	//seconds of invincibility
 	
 } Ship;
 

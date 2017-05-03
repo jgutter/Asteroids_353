@@ -33,3 +33,16 @@ Vector mult(Vector a, int scalar) {
 	result.y = a.y * scalar;
 	return result;
 };
+
+void wrap(Vector* b) {
+	if(b->x > LCD_MAX_X)
+		b->x = LCD_MIN;
+	else if (b->x < LCD_MIN)
+		b->x = LCD_MAX_X;
+	
+	if (b->y > LCD_MAX_Y)
+		b->y = LCD_MIN;
+	else if (b->y < LCD_MIN)
+		b->y = LCD_MAX_Y;
+};
+

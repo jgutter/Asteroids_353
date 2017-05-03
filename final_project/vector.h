@@ -6,10 +6,13 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define PI 3.1415926
-#define LCD_MAX_X 239
-#define LCD_MAX_Y 319
-#define LCD_MIN 0
+#define PI 3.14159
+#define LCD_MAX_X 249
+#define LCD_MAX_Y 329
+#define LCD_MIN -5
+#define LCD_DRAW_MIN 0
+#define LCD_DRAW_MAX_X 239
+#define LCD_DRAW_MAX_Y 319
 
 
 typedef struct { //define vector structure for other modules
@@ -26,7 +29,8 @@ Vector sub(Vector a, Vector b);
 	
 //function to perform scalar multiplication on a vector
 Vector mult(Vector a, int scalar);
-	
+
+void wrap(Vector* a); //wrap vector within screen bounds
 	
 #endif
 
