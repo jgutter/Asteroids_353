@@ -2,7 +2,7 @@
 #include "game.h"
 
 #define NEW_GAME_LIVES 3
-#define ASTEROID_NUMBER 2
+#define ASTEROID_NUMBER 4
 #define SCREEN_CENTER_X 120
 #define SCREEN_CENTER_Y 160
 #define SCREEN_CENTER_STRING_X 4

@@ -494,6 +494,26 @@
               <FileType>1</FileType>
               <FilePath>..\drivers\c\timers.c</FilePath>
             </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\drivers\c\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\drivers\include\spi.h</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\drivers\include\i2c.h</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\drivers\c\i2c.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -523,6 +543,26 @@
               <FileName>ft6x06.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\peripherals\include\ft6x06.h</FilePath>
+            </File>
+            <File>
+              <FileName>wireless.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\peripherals\include\wireless.h</FilePath>
+            </File>
+            <File>
+              <FileName>wireless.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\peripherals\c\wireless.c</FilePath>
+            </File>
+            <File>
+              <FileName>eeprom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\peripherals\c\eeprom.c</FilePath>
+            </File>
+            <File>
+              <FileName>eeprom.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\peripherals\include\eeprom.h</FilePath>
             </File>
           </Files>
         </Group>

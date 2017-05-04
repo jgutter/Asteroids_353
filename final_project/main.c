@@ -53,18 +53,24 @@ char individual_1[] = "Justin Gutter";
 char individual_2[] = "Sadeq Hashemi";
 
 char username[4];
-wireless_configure_device(myID, remoteID );
-
+int char_num;
+int char_ind;
 typedef enum 
 {
   MAIN_MENU,
   IN_GAME, 
 	DISPLAY_HIGH_SCORE,
+	CHECK_HIGHSCORE,
+	GET_USERNAME,
+	SAVE_HIGHSCORE,
+	PRINT_HIGHSCORE
 } MODE_t; 		//top level MODE states
 
-bool sw1_pressed, sw2_pressed, io_down_pressed, g_update;
+bool button_pressed, sw2_pressed, io_down_pressed, g_update;
 bool ps2_up, ps2_left, ps2_right, ps2_down;
 
+uint8_t myID[]      = { 3,5,3,5,2};
+uint8_t remoteID[]  = { 3,5,3,5,1};
 
 volatile bool ALERT_ADC_UPDATE; 	//Update PS2 ADC values; triggered by TimerB
 volatile bool TIMERB_ALERT; 			//Timer B ISR flag
@@ -78,18 +84,35 @@ int PS2_Y;												//PS2 controller Y value
 MODE_t mode;									//mode state enumeration
 
 
-bool sw1_debounce_fsm(void) 			//debounce SW1 state machine
+bool push_button_pressed(void){
+	bool pressed; 
+	uint8_t PB = 0; 
+	i2c_status_t i2c_status;
+	i2c_status = push_button_read(I2C1_BASE, &PB);
+	
+	if(!(PB & 0x02) ) pressed = true;
+	else
+		pressed = false;
+	if((i2c_status == I2C_OK) && pressed) {
+		pressed  = false; 
+		return true; 
+		}
+	
+	return false; 
+}
+
+bool io_down_debounce_fsm(void) 			//debounce SW1 state machine
 {
   bool pin_logic_level;
-  static int debounce_sw1 = 0;
-  pin_logic_level = lp_io_read_pin(SW1_BIT);
+  static int debounce_io_down = 0;
+  pin_logic_level = push_button_pressed();
   
 	if (pin_logic_level)
-		debounce_sw1 = 0;
+		debounce_io_down = 0;
 	else
-		debounce_sw1++;
+		debounce_io_down++;
 	
-	if(debounce_sw1 == 4)
+	if(debounce_io_down == 2)
 		return true;
 	else
 		return false;
@@ -125,8 +148,8 @@ bool sw2_debounce_fsm(void) 			//debounce SW2 state machine
 *******************************************************************************/
 void queue_command(void){
 
-		PS2_X = ((ADC0_Type *)ADC0_BASE)->SSFIFO2 & 0xFFF; //extract X value
-		PS2_Y = ((ADC0_Type *)ADC0_BASE)->SSFIFO2 & 0xFFF; //extract Y value
+		//PS2_X = ((ADC0_Type *)ADC0_BASE)->SSFIFO2 & 0xFFF; //extract X value
+		//PS2_Y = ((ADC0_Type *)ADC0_BASE)->SSFIFO2 & 0xFFF; //extract Y value
 	if(PS2_X > PS2_HIGH_THRESHOLD){ //queue up ps2 right command
 		ps2_right = true;
 	}	
@@ -137,8 +160,12 @@ void queue_command(void){
 	if(PS2_Y > PS2_HIGH_THRESHOLD){ //queue up ps2 up command
 		ps2_up = true;
 	}
-	if (sw1_pressed) {
-		io_down_pressed = true;
+	else if(PS2_Y < PS2_LOW_THRESHOLD){ //queue up ps2 left command
+		ps2_down = true;
+	}
+
+	if (io_down_pressed) {
+		button_pressed = true;
 	}
 }
 
@@ -151,6 +178,7 @@ void initialize_hardware(void)
 	lcd_config_gpio(); //initialize GPIO pins connected to LCD display
 	ft6x06_init();
 	eeprom_init();
+	wireless_initialize();
 	gp_timer_config_16(TIMER0_BASE, PERIOD_A, PERIOD_B, false, true); //Initialize timer0 as 2 16-bit periodic (count-down) timers
 	gp_timer_period(TIMER0_BASE, TEN_MS, THIRTY_MS); //configure period for timer A to be 10ms & timer b 30ms
 																								//both periodic, count-down, and interrupts enabled
@@ -186,6 +214,43 @@ void ADC0SS2_Handler(void) { //Sample sequencer 2 interrupt handler
 }
 
 /********************************HIGHSCORE FUNCTIONS********************************************************/
+
+void read_data(int* highscore){
+	uint16_t addr; 
+	uint8_t highscore_byte, username_byte; 
+
+	i2c_status_t i2c_status;
+	
+	for(addr = 0; addr <NUM_BYTES; addr++){	
+									//reads high_score, receives MSB first 
+									if(addr <  4){ 					
+											i2c_status = eeprom_byte_read(I2C1_BASE,addr, &highscore_byte);						
+											if (i2c_status != I2C_OK) break; //printf("ERROR: on read is %d\n\r", i2c_status);
+											*highscore = ((*highscore)<<8) | highscore_byte;			
+									}
+									//writes username starting with the first character
+									else{
+										//takes the appropriate character from username										
+										 i2c_status = eeprom_byte_read(I2C1_BASE,addr, &username_byte);
+										 if (i2c_status != I2C_OK) break; //printf("ERROR: on read is %d\n\r", i2c_status); 
+											username[addr-4] = username_byte; 
+									}
+				}
+}
+
+void draw_highscore_page(){
+	char msg[] = "HIGH SCORE";
+	char highscore_string[4];
+	int high_score;
+	lcd_print_stringXY(msg, 2, 0, LCD_COLOR_WHITE, LCD_COLOR_BLACK);	//prints message that asks for input
+	read_data(&high_score);
+	lcd_print_stringXY(username, 5, 2, LCD_COLOR_WHITE, LCD_COLOR_BLACK);
+					
+	sprintf(highscore_string, "%d", high_score);
+	lcd_print_stringXY(highscore_string, 5, 4, LCD_COLOR_WHITE, LCD_COLOR_BLACK);
+		
+}
+
 bool screen_pressed(){
 	int x; 
 	int y;
@@ -220,11 +285,51 @@ bool reset_EEPROM(){
 return true;
 }
 
+
+
+bool new_highscore(Game* myGame){
+	int high_score;
+	int myscore = myGame->score;
+	
+	uint16_t addr;
+  uint8_t values[4];
+  uint8_t read_val;
+	bool status = true; 
+	i2c_status_t i2c_status;  
+	
+  //reads  4 bytes from EEPROM, with the first byte being upper byte and last byte being 
+	//the last byte. 
+  for(addr = 0; addr <(NUM_BYTES_HIGHSCORE); addr++)
+  {
+      i2c_status = eeprom_byte_read(I2C1_BASE,addr, &read_val);	//reads and stores byte in read_val
+			
+			if (i2c_status != I2C_OK){
+				status = false; 
+				break;
+				}
+			else {
+			high_score = (high_score << 8) & 0xFFFFFF00; //shifts by one byte and clear lower byte 			
+			high_score = high_score | read_val; }
+  }		
+		//if read was successful, compare scores with old high score
+		//and return true
+  if(status)
+  {
+		if( myscore > high_score ){
+			char_num = 0;
+			char_ind =0;
+			return true; 		
+		}
+  }
+	return false; 
+}
+
+
 void draw_screen_input(){
 	//17 characters fit
 	int i, x, y; 
-	int char_ind= 0; 
-	int char_num =0;
+	 
+
 	
 	bool nxt = false; 
 	
@@ -237,33 +342,6 @@ void draw_screen_input(){
 	lcd_print_stringXY(msg1,2,5,LCD_COLOR_WHITE,LCD_COLOR_BLACK);
 	
 	lcd_print_stringXY(msg0,0,0,LCD_COLOR_WHITE,LCD_COLOR_BLACK);
-	//lcd_print_stringXY(msg0,0,3,LCD_COLOR_BLACK,LCD_COLOR_BLACK);
-		
-	while(char_num < 3){
-	
-		read_PS2();
-		//if right joystick pressed, increment char_num and reset char_ind
-		//char num will count the number of characters entered
-		if(X_HIGH){		
-				if( char_num != 4)char_num ++; 
-				X_HIGH = false; 
-		}
-		else if(X_LOW){				
-				if(char_num != 0) char_num --; 
-				X_LOW = false; 
-		}
-		
-		//increments
-		if(Y_HIGH){	
-			char_ind++;
-			if(char_ind == 26) char_ind = 0; //wrap
-			Y_HIGH = false;
-		}
-		else if(Y_LOW){		
-			char_ind--; 
-			if(char_ind == -1) char_ind = 25;
-			Y_LOW = false;			
-		}
 		
 		
 		switch(char_num){
@@ -287,10 +365,34 @@ void draw_screen_input(){
 				break;
 			}
 		
+					queue_command();
+		//if right joystick pressed, increment char_num and reset char_ind
+		//char num will count the number of characters entered
+		if(ps2_left){		
+				if( char_num != 4)char_num ++; 
+				ps2_left = false; 
+		}
+		else if(ps2_right){				
+				if(char_num != 0) char_num --; 
+				ps2_right = false; 
+		}
+		
+		//increments
+		if(ps2_up){	
+			char_ind++;
+			if(char_ind == 26) char_ind = 0; //wrap
+			ps2_up = false;
+		}
+		else if(ps2_down){		
+			char_ind--; 
+			if(char_ind == -1) char_ind = 25;
+			ps2_down = false;			
+		}
+		
 			for(i = 0; i<1005000; i++){}
 			//if(touch_back_pressed())break;}
 			//if(touch_back_pressed()) break;
-		}
+		
 			
 }
 
@@ -314,29 +416,6 @@ bool save_data(char* usr, int highscore){
 										 i2c_status = eeprom_byte_write(I2C1_BASE,addr, username_char);
 										
 										 if (i2c_status != I2C_OK) break; //printf("ERROR: on read is %d\n\r", i2c_status);
-									}
-				}
-}
-	
-void read_data(int* highscore){
-	uint16_t addr; 
-	uint8_t highscore_byte, username_byte; 
-
-	i2c_status_t i2c_status;
-	
-	for(addr = 0; addr <NUM_BYTES; addr++){	
-									//reads high_score, receives MSB first 
-									if(addr <  4){ 					
-											i2c_status = eeprom_byte_read(I2C1_BASE,addr, &highscore_byte);						
-											if (i2c_status != I2C_OK) break; //printf("ERROR: on read is %d\n\r", i2c_status);
-											*highscore = ((*highscore)<<8) | highscore_byte;			
-									}
-									//writes username starting with the first character
-									else{
-										//takes the appropriate character from username										
-										 i2c_status = eeprom_byte_read(I2C1_BASE,addr, &username_byte);
-										 if (i2c_status != I2C_OK) break; //printf("ERROR: on read is %d\n\r", i2c_status); 
-											username[addr-4] = username_byte; 
 									}
 				}
 }
@@ -366,21 +445,13 @@ int touch_menu_pressed(){
 	if( (x>(13-10)*17 && x< (13-1)*17) && (y<(19-9)*16 && y> (19-11)*16)){
 	return 1;
 	}
-	else if((x>(13-10)*17 && x< (13-1)*17) && (y<(19-11)*16 && y> (19-13)*16)) {	
+	else if((x>(13-8)*17 && x< (13-1)*17) && (y<(19-11)*16 && y> (19-13)*16)) {	
 	return 2;
 	}
  }	
 	return 0;
 }
 
-int menu_pressed(void) { //return 1 if new game pressed; return 2 if high score pressed; return 0 otherwise
-	if (sw1_pressed)
-		return 1;
-	else if (sw2_pressed)
-		return 2;
-	else
-		return 0;
-}
 
 /********************************WIRELESS***********************************************/
 void send_wireless_data(){
@@ -396,7 +467,9 @@ void send_wireless_data(){
 	
 	
 	status = wireless_send_32(true, false, valid);
+	//may need to wait in between; 
 	status = wireless_send_32(true, false, usr);
+	//may need to wait in between; 
 	status = wireless_send_32(true, false, highscore);
 	
 }
@@ -450,41 +523,6 @@ void receive_wireless_data(){
 	}
 }
 
-bool new_highscore(Game* myGame){
-	int high_score;
-	int myscore = myGame->score;
-	
-	uint16_t addr;
-  uint8_t values[4];
-  uint8_t read_val;
-	bool status = true; 
-	i2c_status_t i2c_status;  
-	
-  //reads  4 bytes from EEPROM, with the first byte being upper byte and last byte being 
-	//the last byte. 
-  for(addr = 0; addr <(NUM_BYTES_HIGHSCORE); addr++)
-  {
-      i2c_status = eeprom_byte_read(I2C1_BASE,addr, &read_val);	//reads and stores byte in read_val
-			
-			if (i2c_status != I2C_OK){
-				status = false; 
-				break;
-				}
-			else {
-			high_score = (high_score << 8) & 0xFFFFFF00; //shifts by one byte and clear lower byte 			
-			high_score = high_score | read_val; }
-  }		
-		//if read was successful, compare scores with old high score
-		//and return true
-  if(status)
-  {
-		if( myscore > high_score ){
-			return true; 		
-		}
-  }
-	return false; 
-}
-
 int	main(void)
 {
 	int input;
@@ -492,9 +530,10 @@ int	main(void)
   initialize_hardware();
 	lcd_config_screen(); //reset lcd screen
 	lcd_clear_screen(LCD_COLOR_BLACK); //clear LCD screen to black
-	
+	wireless_configure_device(myID, remoteID );
+	pull_up(I2C1_BASE);
  
-	
+	//reset_EEPROM();
   // Reach infinite loop
   while(1){
 		if (TIMERB_ALERT) {
@@ -502,7 +541,7 @@ int	main(void)
 				TIMERB_ALERT = false; //clear flag
 		}
 		if (TIMERA_ALERT) {
-				sw1_pressed = sw1_debounce_fsm(); //check if debounced sw1 has been pressed
+				io_down_pressed = io_down_debounce_fsm(); //check if debounced sw1 has been pressed
 				sw2_pressed = sw2_debounce_fsm(); //check if debounced sw2 has been pressed
 				TIMERA_ALERT = false; //clear flag
 		}
@@ -512,10 +551,14 @@ int	main(void)
 			ALERT_ADC_UPDATE = false;
 		}
 
-	input = menu_pressed();
 	switch (mode) {
 		case MAIN_MENU:{ //main menu loop
 			draw_main_menu();	//prints the main menu
+			
+			do{
+			input = touch_menu_pressed();
+			}while(input==0);	//waits until a menu option was pressed
+			
 			switch (input) {
 				case 1:
 					mode = IN_GAME;
@@ -533,12 +576,8 @@ int	main(void)
 		break;
 		case IN_GAME: //in game loop
 			if (main_game->status == LOSE || main_game->status == WIN){	
-
-				
-					if(new_highscore(main_game)) 		
-							mode = DISPLAY_HIGH_SCORE;
-				
-						else mode = MAIN_MENU;		
+					lcd_clear_screen(LCD_COLOR_BLACK);
+					mode = CHECK_HIGHSCORE;	
 			}
 			else {
 					if (main_game->status == PLAYING) {
@@ -558,9 +597,9 @@ int	main(void)
 							accelerate_ship(&main_game->ship);	//accelerate ship on PS2 signal
 							ps2_up = false;
 						}
-						if (io_down_pressed) {
+						if (button_pressed) {
 							fire_bullet(main_game->bullets,&main_game->ship);
-							io_down_pressed = false;
+							button_pressed = false;
 						}
 						update_game(main_game, TIME_INCREMENT); //update game
 						g_update = false;
@@ -572,20 +611,32 @@ int	main(void)
 				draw_game(main_game);
 			}
 		break;
+			
+		case CHECK_HIGHSCORE:
+			if(new_highscore(main_game)) mode = GET_USERNAME;
+			else mode = DISPLAY_HIGH_SCORE; 
+			break;
+		
+		case GET_USERNAME:
+			if(char_num == 4) mode = SAVE_HIGHSCORE; 
+			
+			else if(char_num == 0){
+					lcd_clear_screen(LCD_COLOR_BLACK);
+					//requests for new username and stores it.
+					draw_screen_input(); 	//draws a new screen and takes input
+			} 
+			else draw_screen_input(); 	//draws a new screen and takes input
+			break;
+			
+		case SAVE_HIGHSCORE:
+				save_data(username, main_game->score);	//saves data to EEPROM
+			mode = DISPLAY_HIGH_SCORE; 
+			break;
 		case DISPLAY_HIGH_SCORE:
 			
-		
-			for (delay =0; delay < 700000; delay++) {}; //delay
-			switch (input) {
-				case 1:
-					mode = MAIN_MENU;
-					break;
-				case 2:
-					mode = MAIN_MENU;
-					break;
-				default:
-					mode = DISPLAY_HIGH_SCORE;
-			}
+				lcd_clear_screen(LCD_COLOR_BLACK);
+				draw_highscore_page();					
+				if(screen_pressed())mode = MAIN_MENU; 
 		break;
 			
 			
